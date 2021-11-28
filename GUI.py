@@ -1,12 +1,17 @@
 import math
 import tkinter
-from tkinter import *
+from tkinter import N, E, S, W
 from tkinter.filedialog import askopenfilename
-from tkinter.ttk import Combobox
+from tkinter.ttk import *
 from googleapiclient.discovery import build
 
 import pandas as pd
 from pandastable import Table
+
+READY_STR = "Ready to scan!"
+ISBN13_NOT_FOUND_STR = "That's an ISBN10 number, look up the ISBN13 number manually."
+INCREASED_QUANTITY_STR = "Already in inventory, new quantity increased from {} to {}"
+CATEGORIES = ("", "@", "Ableism", "Abuse", "Africa")
 
 
 def on_closing():
@@ -27,50 +32,52 @@ def reformat_name(raw_name: str) -> str:
         return raw_name
 
 
-class KafnaGUI(Frame):
+class KafnaGUI:
 
-    def __init__(self, master, **kw):
-        super().__init__(master, **kw)
+    def __init__(self, root):
+        # with open("key.txt", "r") as f:
+        #     api_key = f.readline().strip()
+        # service = build("books", "v1", developerKey=api_key)
+        # self.volumes = service.volumes()
 
-        with open("key.txt", "r") as f:
-            api_key = f.readline().strip()
-        service = build("books", "v1", developerKey=api_key)
-        self.volumes = service.volumes()
+        self.root = root
+        self.root.title("Kafna")
+        self.root.maxsize(1000, 600)
+        self.root.minsize(1000, 600)
 
-        self.master = master
-        self.master.title("Kafna")
-        self.master.maxsize(1000, 600)
-        self.master.minsize(1000, 600)
-
-        c = Canvas(self.master)
+        c = tkinter.Canvas(self.root)
         c.configure(yscrollincrement='10c')
 
         # create all of the main containers
-        mainframe = Frame(self.master, pady=3)
+        mainframe = Frame(self.root, padding="3 3 12 12")
         mainframe.grid(row=0, sticky=(N, W, E, S))
 
         # layout all of the main containers
-        self.master.grid_rowconfigure(1, weight=1)
-        self.master.grid_columnconfigure(0, weight=1)
+        self.root.grid_rowconfigure(1, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
 
         # Create container for table
-        self.center = Frame(self.master, bg='gray2', pady=3)
+        self.center = Frame(self.root)
         self.center.grid(row=1, sticky="nsew")
 
         # create the widgets for the top frame
-        self.isbn = StringVar()
+        self.isbn = tkinter.StringVar()
         self.isbn_entry = Entry(mainframe, width=50, textvariable=self.isbn)
-        self.category = StringVar()
+        self.status_str = tkinter.StringVar()
+        self.status_str.set(READY_STR)
+        self.status_label = Label(mainframe, textvariable=self.status_str)
+        self.category = tkinter.StringVar()
         self.category_combobox = Combobox(mainframe, textvariable=self.category)
         self.saveButton = tkinter.Button(mainframe, text="Save", command=self.save)
 
         # layout the widgets in the top frame
         self.isbn_entry.grid(row=0, column=0, sticky=(W, E))
-        self.category_combobox.grid(row=0, column=1, sticky=(W, E))
-        self.saveButton.grid(row=0, column=2, sticky=(E, ))
+        self.status_label.grid(row=0, column=1, sticky=(W, E))
+        self.category_combobox.grid(row=0, column=2, sticky=(W, E))
+        self.saveButton.grid(row=0, column=3, sticky=(E, ))
 
         # Configure widgets and bind callbacks
-        self.category_combobox["values"] = ("", "@", "Ableism", "Abuse", "Africa")
+        self.category_combobox["values"] = CATEGORIES
         self.category_combobox.state(["readonly"])
         self.isbn_entry.bind("<Return>", self.isbn_changed)
 
