@@ -142,7 +142,7 @@ def main():
             if num == "quit":
                 break
             if num.startswith("category:"):
-                category = num[9:]
+                category = num[9:].strip()
                 print("Category set to \"" + category + "\"")
             elif num.strip() != "":
                 data = web_log(num, data, vol, category)
